@@ -1,14 +1,40 @@
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Property } from "@/types";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 interface PropertiesTabProps {
   properties: Property[];
 }
 
-const PropertiesTab = ({ properties }: PropertiesTabProps) => {
+const PropertiesTab = ({ properties: initialProperties }: PropertiesTabProps) => {
+  const [properties, setProperties] = useState(initialProperties);
+  const [toggleLoading, setToggleLoading] = useState<string | null>(null);
+
+  const handleStatusToggle = (propertyId: string, currentStatus: boolean) => {
+    setToggleLoading(propertyId);
+
+    // Simulate API call to update property status
+    setTimeout(() => {
+      setProperties(prev => 
+        prev.map(property => 
+          property.id === propertyId 
+            ? { ...property, isActive: !currentStatus } 
+            : property
+        )
+      );
+      
+      setToggleLoading(null);
+      toast.success(`Property ${currentStatus ? 'deactivated' : 'activated'} successfully`, {
+        description: `The property is now ${currentStatus ? 'hidden from' : 'visible to'} potential tenants.`,
+      });
+    }, 800); // Simulate network delay
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -68,11 +94,27 @@ const PropertiesTab = ({ properties }: PropertiesTabProps) => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    property.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                  }`}>
-                    {property.isActive ? "Active" : "Inactive"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={property.isActive}
+                      disabled={toggleLoading === property.id}
+                      onCheckedChange={() => handleStatusToggle(property.id, property.isActive)}
+                    />
+                    <span className={`inline-flex items-center text-xs leading-5 font-medium ${
+                      property.isActive 
+                        ? "text-green-700" 
+                        : "text-gray-500"
+                    }`}>
+                      {toggleLoading === property.id ? (
+                        <AlertCircle className="h-4 w-4 text-amber-500 mr-1 animate-pulse" />
+                      ) : property.isActive ? (
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-gray-400 mr-1" />
+                      )}
+                      {property.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   ₹{property.price.toLocaleString("en-IN")}/mo
