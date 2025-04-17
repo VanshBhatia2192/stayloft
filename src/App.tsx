@@ -11,6 +11,7 @@ import HostelsPage from "./pages/HostelsPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import AddEditPropertyPage from "./pages/AddEditPropertyPage";
+import ContactSupportPage from "./pages/ContactSupportPage";
 import LoginPage from "./pages/LoginPage";
 import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard/add-property" element={<AddEditPropertyPage />} />
           <Route path="/dashboard/edit-property/:id" element={<AddEditPropertyPage />} />
+          <Route path="/dashboard/support" element={<ContactSupportPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/about" element={<AboutPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

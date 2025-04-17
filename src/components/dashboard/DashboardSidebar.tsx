@@ -1,7 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Building, Home, User, Bell, Settings } from "lucide-react";
+import { Building, Home, User, Bell, Settings, HelpCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface DashboardSidebarProps {
   activeTab: string;
@@ -78,7 +79,12 @@ const DashboardSidebar = ({ activeTab, setActiveTab, unreadMessages }: Dashboard
         <p className="text-sm text-gray-700 mb-4">
           Our support team is always ready to assist you with any questions.
         </p>
-        <Button variant="outline" className="w-full">Contact Support</Button>
+        <Button variant="outline" className="w-full" asChild>
+          <Link to="/dashboard/support">
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Contact Support
+          </Link>
+        </Button>
       </div>
     </div>
   );
