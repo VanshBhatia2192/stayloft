@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Building, Home, Plus, Settings, User, Bell } from "lucide-react";
+import { Building, Home, Plus, Settings, User, Bell, Pencil } from "lucide-react";
 import { mockFlats, mockPGs, mockHostels } from "@/lib/mock-data";
 
 const DashboardPage = () => {
@@ -186,11 +186,15 @@ const DashboardPage = () => {
                               ₹{property.price.toLocaleString("en-IN")}/mo
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
+                              <div className="flex space-x-3">
                                 <Link to={`/property/${property.id}`} className="text-indigo-600 hover:text-indigo-900">
                                   View
                                 </Link>
-                                <Link to={`/dashboard/edit-property/${property.id}`} className="text-blue-600 hover:text-blue-900">
+                                <Link 
+                                  to={`/dashboard/edit-property/${property.id}`} 
+                                  className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                                >
+                                  <Pencil className="h-4 w-4" />
                                   Edit
                                 </Link>
                               </div>
