@@ -14,6 +14,7 @@ import AddEditPropertyPage from "./pages/AddEditPropertyPage";
 import ContactSupportPage from "./pages/ContactSupportPage";
 import LoginPage from "./pages/LoginPage";
 import AboutPage from "./pages/AboutPage";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/dashboard/add-property" element={<AddEditPropertyPage />} />
           <Route path="/dashboard/edit-property/:id" element={<AddEditPropertyPage />} />
           <Route path="/dashboard/support" element={<ContactSupportPage />} />
+          <Route path="/chat/:userId" element={<ChatPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/about" element={<AboutPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

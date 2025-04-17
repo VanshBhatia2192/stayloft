@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Building, Home, User, Bell, Settings, HelpCircle } from "lucide-react";
+import { Building, MessageSquare, Settings, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface DashboardSidebarProps {
@@ -16,7 +16,7 @@ const DashboardSidebar = ({ activeTab, setActiveTab, unreadMessages }: Dashboard
       <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
         <div className="flex items-center gap-4 mb-4 pb-4 border-b">
           <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <User className="h-6 w-6 text-primary" />
+            <Building className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold">John Doe</h3>
@@ -35,24 +35,12 @@ const DashboardSidebar = ({ activeTab, setActiveTab, unreadMessages }: Dashboard
             <span>My Properties</span>
           </button>
           
-          <button 
-            className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-left ${
-              activeTab === "bookings" ? "bg-primary/10 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"
-            }`}
-            onClick={() => setActiveTab("bookings")}
-          >
-            <Home className="h-5 w-5" />
-            <span>Booking Requests</span>
-          </button>
-          
-          <button 
-            className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-left ${
-              activeTab === "messages" ? "bg-primary/10 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"
-            }`}
-            onClick={() => setActiveTab("messages")}
+          <Link 
+            to="/chat/support"
+            className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-left text-gray-700 hover:bg-gray-100`}
           >
             <div className="relative">
-              <Bell className="h-5 w-5" />
+              <MessageSquare className="h-5 w-5" />
               {unreadMessages > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
                   {unreadMessages}
@@ -60,7 +48,7 @@ const DashboardSidebar = ({ activeTab, setActiveTab, unreadMessages }: Dashboard
               )}
             </div>
             <span>Messages</span>
-          </button>
+          </Link>
           
           <button 
             className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-left ${
