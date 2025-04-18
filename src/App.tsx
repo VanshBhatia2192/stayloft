@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,14 +17,7 @@ import LoginPage from "./pages/LoginPage";
 import AboutPage from "./pages/AboutPage";
 import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
-
-// User dashboard components
-import SavedPropertiesTab from "./components/user-dashboard/SavedPropertiesTab";
-import RecentSearchesTab from "./components/user-dashboard/RecentSearchesTab";
-import BookingsTab from "./components/user-dashboard/BookingsTab";
-import PaymentsTab from "./components/user-dashboard/PaymentsTab";
-import VerificationTab from "./components/user-dashboard/VerificationTab";
-import ProfileTab from "./components/user-dashboard/ProfileTab";
+import SignupPage from "./pages/SignupPage";
 
 const queryClient = new QueryClient();
 
@@ -64,7 +56,7 @@ const App = () => (
             <Route path="/chat/:userId" element={<ChatPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/about" element={<AboutPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/signup" element={<SignupPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
