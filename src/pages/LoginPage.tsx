@@ -1,18 +1,22 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building, Mail, Lock, Eye, EyeOff, Facebook, Github } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building, Mail, Lock, Eye, EyeOff, Facebook, User, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { UserRole } from "@/types";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>("TENANT");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +36,16 @@ const LoginPage = () => {
     setTimeout(() => {
       toast({
         title: "Login Successful",
-        description: "Welcome back to StayLoft!",
+        description: `Welcome back to StayLoft as a ${userRole.toLowerCase()}!`,
       });
       setIsLoggingIn(false);
       
-      // In a real app, you would redirect after successful login
-      // history.push('/dashboard');
+      // Redirect based on role
+      if (userRole === "OWNER") {
+        navigate("/dashboard");
+      } else {
+        navigate("/user-dashboard");
+      }
     }, 1500);
   };
 
@@ -56,6 +64,19 @@ const LoginPage = () => {
             <h2 className="text-3xl font-bold">Welcome Back</h2>
             <p className="text-gray-600 mt-1">Login to access your account</p>
           </div>
+          
+          <Tabs defaultValue="tenant" className="mb-6" onValueChange={(value) => setUserRole(value as UserRole)}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="TENANT" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span>Tenant</span>
+              </TabsTrigger>
+              <TabsTrigger value="OWNER" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                <span>Property Owner</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">

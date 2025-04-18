@@ -7,7 +7,7 @@ export interface Property {
   location: PropertyLocation;
   price: number;
   images: { url: string }[];
-  amenities: string[];
+  amenities: Amenity[];
   isActive: boolean;
   ownerId: string;
   createdAt: Date;
@@ -64,4 +64,101 @@ export type Amenity =
   | "Lift" 
   | "CCTV" 
   | "Food" 
-  | "Cleaning";
+  | "Cleaning"
+  | "Attached Bathroom"
+  | "Geyser";
+
+export type UserRole = "TENANT" | "OWNER" | "ADMIN";
+
+export type ThemeType = "light" | "dark" | "system";
+
+export type VerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: UserRole;
+  avatar?: string;
+  bio?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  savedProperties?: string[];
+  recentSearches?: RecentSearch[];
+  theme: ThemeType;
+  notifications: NotificationPreference;
+  verificationStatus: VerificationStatus;
+  verificationDocuments?: VerificationDocument[];
+}
+
+export interface RecentSearch {
+  id: string;
+  query: string;
+  filters?: Record<string, any>;
+  timestamp: Date;
+}
+
+export interface Booking {
+  id: string;
+  propertyId: string;
+  property?: Property;
+  tenantId: string;
+  tenant?: User;
+  startDate: Date;
+  endDate?: Date;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  createdAt: Date;
+  updatedAt: Date;
+  payments: Payment[];
+}
+
+export interface Payment {
+  id: string;
+  bookingId: string;
+  amount: number;
+  status: "PENDING" | "PAID" | "FAILED";
+  dueDate: Date;
+  paidDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Chat {
+  id: string;
+  participants: string[];
+  propertyId?: string;
+  lastMessage?: Message;
+  updatedAt: Date;
+  createdAt: Date;
+}
+
+export interface Message {
+  id: string;
+  chatId: string;
+  senderId: string;
+  content: string;
+  timestamp: Date;
+  read: boolean;
+  attachments?: string[];
+}
+
+export interface NotificationPreference {
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+  newMessages: boolean;
+  bookingUpdates: boolean;
+  paymentReminders: boolean;
+  promotions: boolean;
+}
+
+export interface VerificationDocument {
+  id: string;
+  userId: string;
+  type: "ID_CARD" | "PASSPORT" | "DRIVERS_LICENSE" | "ADDRESS_PROOF";
+  fileUrl: string;
+  status: VerificationStatus;
+  uploadedAt: Date;
+  verifiedAt?: Date;
+}
