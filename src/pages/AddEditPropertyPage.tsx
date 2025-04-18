@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -15,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { mockFlats, mockPGs, mockHostels } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { Image as ImageIcon, Trash2, Star } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -26,6 +26,10 @@ const formSchema = z.object({
     area: z.string().min(2, { message: "Area is required" }),
   }),
   isActive: z.boolean().default(true),
+  images: z.array(z.object({
+    url: z.string(),
+    isThumbnail: z.boolean().default(false)
+  })).default([]),
 });
 
 const AddEditPropertyPage = () => {
@@ -33,8 +37,9 @@ const AddEditPropertyPage = () => {
   const navigate = useNavigate();
   const isEditing = Boolean(id);
   const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState<{ url: string; isThumbnail: boolean }[]>([]);
+  const [thumbnailIndex, setThumbnailIndex] = useState<number>(0);
   
-  // In a real app, we'd fetch from API
   const allProperties = [...mockFlats, ...mockPGs, ...mockHostels];
   const property = id ? allProperties.find(prop => prop.id === id) : null;
   
@@ -50,13 +55,53 @@ const AddEditPropertyPage = () => {
         area: property?.location.area || "",
       },
       isActive: property?.isActive ?? true,
+      images: property?.images || [],
     },
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + images.length > 10) {
+      toast.error("Maximum 10 images allowed");
+      return;
+    }
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const url = e.target?.result as string;
+        setImages(prev => [...prev, { url, isThumbnail: prev.length === 0 }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    if (thumbnailIndex === index) {
+      setThumbnailIndex(0);
+      setImages(prev => prev.map((img, i) => ({
+        ...img,
+        isThumbnail: i === 0
+      })));
+    }
+  };
+
+  const setThumbnail = (index: number) => {
+    setThumbnailIndex(index);
+    setImages(prev => prev.map((img, i) => ({
+      ...img,
+      isThumbnail: i === index
+    })));
+  };
   
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     setLoading(true);
+    const formData = {
+      ...values,
+      images
+    };
     
-    // Simulate API call
     setTimeout(() => {
       setLoading(false);
       toast.success(isEditing ? "Property updated successfully!" : "Property added successfully!");
@@ -64,7 +109,6 @@ const AddEditPropertyPage = () => {
     }, 1000);
   };
   
-  // If we're editing but can't find the property
   if (isEditing && !property) {
     return (
       <Layout>
@@ -199,6 +243,59 @@ const AddEditPropertyPage = () => {
                       </FormItem>
                     )}
                   />
+                </div>
+                
+                <div className="space-y-4">
+                  <Label>Property Images (Max 10)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image.url}
+                          alt={`Property ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            type="button"
+                            onClick={() => removeImage(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={image.isThumbnail ? "default" : "secondary"}
+                            size="icon"
+                            type="button"
+                            onClick={() => setThumbnail(index)}
+                          >
+                            <Star className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {image.isThumbnail && (
+                          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                            Thumbnail
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {images.length < 10 && (
+                      <div className="border-2 border-dashed rounded-lg flex items-center justify-center p-4 h-32">
+                        <label className="cursor-pointer text-center">
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            multiple
+                            onChange={handleImageUpload}
+                          />
+                          <ImageIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                          <span className="text-sm text-gray-500">Add Images</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <FormField
