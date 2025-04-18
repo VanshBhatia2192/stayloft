@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "../theme/ThemeToggle"
+import { UserRole } from "@/types"
 
 interface UserMenuProps {
-  userType?: "TENANT" | "OWNER"
-  userName?: string
-  userImage?: string
+  userType?: UserRole;
+  userName?: string;
+  userImage?: string;
 }
 
 export function UserMenu({ userType = "TENANT", userName = "User", userImage }: UserMenuProps) {

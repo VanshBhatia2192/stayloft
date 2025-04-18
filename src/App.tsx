@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,12 @@ import HostelsPage from "./pages/HostelsPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import UserDashboardPage from "./pages/UserDashboardPage";
+import SavedPropertiesTab from "./components/user-dashboard/SavedPropertiesTab";
+import RecentSearchesTab from "./components/user-dashboard/RecentSearchesTab";
+import BookingsTab from "./components/user-dashboard/BookingsTab";
+import PaymentsTab from "./components/user-dashboard/PaymentsTab";
+import VerificationTab from "./components/user-dashboard/VerificationTab";
+import ProfileTab from "./components/user-dashboard/ProfileTab";
 import AddEditPropertyPage from "./pages/AddEditPropertyPage";
 import ContactSupportPage from "./pages/ContactSupportPage";
 import LoginPage from "./pages/LoginPage";

@@ -5,10 +5,11 @@ import { Building, Home, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/user/UserMenu";
+import { UserRole } from "@/types";
 
 // Mock user state - in a real app, this would come from your auth context
 const mockUser = {
-  type: "TENANT" as const,
+  type: "TENANT" as UserRole,
   name: "John Doe",
   image: "",
 };
