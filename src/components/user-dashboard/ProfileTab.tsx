@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,21 +7,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Camera, AtSign, Phone, MapPin, Shield } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, Camera, AtSign, Phone, MapPin, Shield, Languages } from "lucide-react";
 import { ThemeToggle } from "../theme/ThemeToggle";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
+import { Language } from "@/types";
 
 const ProfileTab = () => {
   const [activeTab, setActiveTab] = useState("personal");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   // Mock user data - in a real app, this would come from API calls
-  const user = {
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
+  const [userData, setUserData] = useState({
+    name: localStorage.getItem("userName") || "Alex Johnson",
+    email: localStorage.getItem("userEmail") || "alex.johnson@example.com",
     phone: "+91 9876543210",
     address: "123 Main St, Bangalore",
     bio: "Looking for a comfortable place to stay near my workplace.",
-    avatar: "",
+    avatar: localStorage.getItem("userAvatar") || "",
+    language: localStorage.getItem("userLanguage") || "English",
     notificationPreferences: {
       email: true,
       push: true,
@@ -31,22 +38,132 @@ const ProfileTab = () => {
       paymentReminders: true,
       promotions: false
     }
+  });
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setUserData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleNotificationChange = (name: string, checked: boolean) => {
+    setUserData(prev => ({
+      ...prev,
+      notificationPreferences: {
+        ...prev.notificationPreferences,
+        [name]: checked
+      }
+    }));
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setUserData(prev => ({
+      ...prev,
+      language: value
+    }));
+    localStorage.setItem("userLanguage", value);
   };
   
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would save the profile data
-    console.log("Saving profile data");
+    // In a real app, you would save the profile data to your backend
+    
+    // For demo purposes, save to localStorage
+    localStorage.setItem("userName", userData.name);
+    localStorage.setItem("userEmail", userData.email);
+    
+    toast({
+      title: "Profile updated",
+      description: "Your profile has been updated successfully."
+    });
   };
+  
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image less than 5MB in size.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file (JPEG, PNG, etc.).",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    // In a real app, you would upload the file to your backend/storage service
+    // For demo purposes, use FileReader to get the data URL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const avatarUrl = event.target?.result as string;
+      setUserData(prev => ({
+        ...prev,
+        avatar: avatarUrl
+      }));
+      
+      // Store in localStorage for demo persistence
+      localStorage.setItem("userAvatar", avatarUrl);
+      
+      setIsUploading(false);
+      
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been updated successfully."
+      });
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
+  const calculateProfileCompletion = () => {
+    let completed = 0;
+    let total = 5; // name, email, phone, address, avatar
+    
+    if (userData.name) completed += 1;
+    if (userData.email) completed += 1;
+    if (userData.phone) completed += 1;
+    if (userData.address) completed += 1;
+    if (userData.avatar) completed += 1;
+    
+    return Math.floor((completed / total) * 100);
+  };
+  
+  const completionPercentage = calculateProfileCompletion();
 
   return (
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>
-            Manage your account settings and preferences
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Profile Settings</CardTitle>
+              <CardDescription>
+                Manage your account settings and preferences
+              </CardDescription>
+            </div>
+            <div className="flex items-center bg-primary/10 px-3 py-1 rounded-full">
+              <span className="text-sm font-medium">Profile completion: {completionPercentage}%</span>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -60,15 +177,28 @@ const ProfileTab = () => {
               <form onSubmit={handleSaveProfile}>
                 <div className="flex flex-col md:flex-row gap-8 mb-6">
                   <div className="flex flex-col items-center space-y-4">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      style={{ display: 'none' }}
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
+                      <AvatarImage src={userData.avatar} alt={userData.name} />
                       <AvatarFallback className="text-2xl">
-                        {user.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                        {userData.name.split(" ").map(n => n[0]).join("").toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <Button variant="outline" size="sm" className="flex items-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={handleAvatarClick}
+                      disabled={isUploading}
+                    >
                       <Camera className="h-4 w-4 mr-2" />
-                      Change Photo
+                      {isUploading ? "Uploading..." : "Change Photo"}
                     </Button>
                   </div>
                   
@@ -82,7 +212,9 @@ const ProfileTab = () => {
                           </div>
                           <Input 
                             id="name" 
-                            defaultValue={user.name} 
+                            name="name"
+                            defaultValue={userData.name} 
+                            onChange={handleInputChange}
                             className="rounded-l-none"
                           />
                         </div>
@@ -96,8 +228,10 @@ const ProfileTab = () => {
                           </div>
                           <Input 
                             id="email" 
+                            name="email"
                             type="email" 
-                            defaultValue={user.email}
+                            defaultValue={userData.email}
+                            onChange={handleInputChange}
                             className="rounded-l-none"
                           />
                         </div>
@@ -111,7 +245,9 @@ const ProfileTab = () => {
                           </div>
                           <Input 
                             id="phone" 
-                            defaultValue={user.phone} 
+                            name="phone"
+                            defaultValue={userData.phone}
+                            onChange={handleInputChange}
                             className="rounded-l-none"
                           />
                         </div>
@@ -125,7 +261,9 @@ const ProfileTab = () => {
                           </div>
                           <Input 
                             id="address" 
-                            defaultValue={user.address} 
+                            name="address"
+                            defaultValue={userData.address}
+                            onChange={handleInputChange}
                             className="rounded-l-none"
                           />
                         </div>
@@ -135,7 +273,9 @@ const ProfileTab = () => {
                         <Label htmlFor="bio">Bio</Label>
                         <Textarea 
                           id="bio" 
-                          defaultValue={user.bio} 
+                          name="bio"
+                          defaultValue={userData.bio}
+                          onChange={handleInputChange}
                           rows={3}
                           placeholder="Tell us a little about yourself"
                         />
@@ -161,11 +301,26 @@ const ProfileTab = () => {
                 <div className="border-t pt-4">
                   <h3 className="text-lg font-medium mb-2">Language</h3>
                   <p className="text-muted-foreground text-sm mb-4">Select your preferred language</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="justify-start">English</Button>
-                    <Button variant="outline" className="justify-start">Hindi</Button>
-                    <Button variant="outline" className="justify-start">Tamil</Button>
-                    <Button variant="outline" className="justify-start">Telugu</Button>
+                  <div className="max-w-xs">
+                    <Select value={userData.language} onValueChange={handleLanguageChange}>
+                      <SelectTrigger className="w-full">
+                        <div className="flex items-center gap-2">
+                          <Languages className="h-4 w-4" />
+                          <SelectValue placeholder="Select a language" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Hindi">Hindi</SelectItem>
+                        <SelectItem value="Tamil">Tamil</SelectItem>
+                        <SelectItem value="Telugu">Telugu</SelectItem>
+                        <SelectItem value="Kannada">Kannada</SelectItem>
+                        <SelectItem value="Malayalam">Malayalam</SelectItem>
+                        <SelectItem value="Bengali">Bengali</SelectItem>
+                        <SelectItem value="Marathi">Marathi</SelectItem>
+                        <SelectItem value="Gujarati">Gujarati</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
@@ -201,7 +356,8 @@ const ProfileTab = () => {
                     </div>
                     <Switch 
                       id="email-notifications" 
-                      defaultChecked={user.notificationPreferences.email} 
+                      checked={userData.notificationPreferences.email}
+                      onCheckedChange={(checked) => handleNotificationChange("email", checked)}
                     />
                   </div>
                   
@@ -212,7 +368,8 @@ const ProfileTab = () => {
                     </div>
                     <Switch 
                       id="push-notifications" 
-                      defaultChecked={user.notificationPreferences.push} 
+                      checked={userData.notificationPreferences.push}
+                      onCheckedChange={(checked) => handleNotificationChange("push", checked)}
                     />
                   </div>
                   
@@ -223,7 +380,8 @@ const ProfileTab = () => {
                     </div>
                     <Switch 
                       id="sms-notifications" 
-                      defaultChecked={user.notificationPreferences.sms} 
+                      checked={userData.notificationPreferences.sms}
+                      onCheckedChange={(checked) => handleNotificationChange("sms", checked)}
                     />
                   </div>
                 </div>
@@ -238,7 +396,8 @@ const ProfileTab = () => {
                       </div>
                       <Switch 
                         id="new-messages" 
-                        defaultChecked={user.notificationPreferences.newMessages} 
+                        checked={userData.notificationPreferences.newMessages}
+                        onCheckedChange={(checked) => handleNotificationChange("newMessages", checked)}
                       />
                     </div>
                     
@@ -249,7 +408,8 @@ const ProfileTab = () => {
                       </div>
                       <Switch 
                         id="booking-updates" 
-                        defaultChecked={user.notificationPreferences.bookingUpdates} 
+                        checked={userData.notificationPreferences.bookingUpdates}
+                        onCheckedChange={(checked) => handleNotificationChange("bookingUpdates", checked)}
                       />
                     </div>
                     
@@ -260,7 +420,8 @@ const ProfileTab = () => {
                       </div>
                       <Switch 
                         id="payment-reminders" 
-                        defaultChecked={user.notificationPreferences.paymentReminders} 
+                        checked={userData.notificationPreferences.paymentReminders}
+                        onCheckedChange={(checked) => handleNotificationChange("paymentReminders", checked)}
                       />
                     </div>
                     
@@ -271,7 +432,8 @@ const ProfileTab = () => {
                       </div>
                       <Switch 
                         id="promotions" 
-                        defaultChecked={user.notificationPreferences.promotions} 
+                        checked={userData.notificationPreferences.promotions}
+                        onCheckedChange={(checked) => handleNotificationChange("promotions", checked)}
                       />
                     </div>
                   </div>
@@ -279,7 +441,9 @@ const ProfileTab = () => {
               </div>
               
               <div className="pt-4">
-                <Button>Save Preferences</Button>
+                <Button onClick={() => toast({ title: "Preferences saved", description: "Your notification preferences have been updated." })}>
+                  Save Preferences
+                </Button>
               </div>
             </TabsContent>
           </Tabs>

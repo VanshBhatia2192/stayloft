@@ -1,8 +1,10 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UploadCloud, CheckCircle, AlertCircle, Clock, Shield } from "lucide-react";
+import { UploadCloud, CheckCircle, AlertCircle, Clock, Shield, FileText, CreditCard, Car } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
 import { VerificationStatus } from "@/types";
 
 const VerificationTab = () => {
@@ -11,19 +13,35 @@ const VerificationTab = () => {
   const [documents, setDocuments] = useState([
     { 
       id: "1", 
-      type: "ID_CARD" as const, 
-      status: "VERIFIED" as VerificationStatus, 
-      fileName: "aadhar_card.jpg", 
+      type: "AADHAAR" as const, 
+      status: "PENDING" as VerificationStatus, 
+      fileName: "aadhaar_card.jpg", 
       uploadedAt: new Date(2025, 3, 10) 
     },
     { 
       id: "2", 
-      type: "ADDRESS_PROOF" as const, 
+      type: "PAN" as const, 
       status: "PENDING" as VerificationStatus, 
-      fileName: "electricity_bill.pdf", 
-      uploadedAt: new Date(2025, 3, 15) 
+      fileName: "", 
+      uploadedAt: new Date() 
+    },
+    { 
+      id: "3", 
+      type: "DRIVERS_LICENSE" as const, 
+      status: "PENDING" as VerificationStatus, 
+      fileName: "", 
+      uploadedAt: new Date() 
     }
   ]);
+  
+  const fileInputRefs = {
+    AADHAAR: useRef<HTMLInputElement>(null),
+    PAN: useRef<HTMLInputElement>(null),
+    DRIVERS_LICENSE: useRef<HTMLInputElement>(null),
+  };
+  
+  const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState<string | null>(null);
   
   const getStatusBadge = (status: VerificationStatus) => {
     switch (status) {
@@ -53,9 +71,91 @@ const VerificationTab = () => {
     }
   };
   
-  const handleUploadDocument = (type: string) => {
-    // In a real app, you would implement document upload functionality
-    console.log(`Uploading document of type: ${type}`);
+  const handleUploadClick = (type: string) => {
+    if (type === "AADHAAR") fileInputRefs.AADHAAR.current?.click();
+    if (type === "PAN") fileInputRefs.PAN.current?.click();
+    if (type === "DRIVERS_LICENSE") fileInputRefs.DRIVERS_LICENSE.current?.click();
+  };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select a file less than 5MB in size.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsUploading(type);
+    
+    // In a real app, you would upload the file to your backend/storage service
+    // For demo purposes, simulate an upload delay
+    setTimeout(() => {
+      setDocuments(prev => prev.map(doc => 
+        doc.type === type 
+          ? { ...doc, fileName: file.name, status: "PENDING", uploadedAt: new Date() } 
+          : doc
+      ));
+      
+      setIsUploading(null);
+      
+      toast({
+        title: "Document uploaded",
+        description: `Your ${getDocumentTypeName(type)} has been uploaded and is being reviewed.`
+      });
+      
+      // Update overall verification status
+      updateOverallStatus();
+    }, 1500);
+  };
+  
+  const getDocumentTypeName = (type: string) => {
+    switch (type) {
+      case "AADHAAR": return "Aadhaar Card";
+      case "PAN": return "PAN Card";
+      case "DRIVERS_LICENSE": return "Driving License";
+      default: return type;
+    }
+  };
+  
+  const getDocumentIcon = (type: string) => {
+    switch (type) {
+      case "AADHAAR": return <CreditCard className="h-5 w-5 text-primary" />;
+      case "PAN": return <FileText className="h-5 w-5 text-primary" />;
+      case "DRIVERS_LICENSE": return <Car className="h-5 w-5 text-primary" />;
+      default: return <Shield className="h-5 w-5 text-primary" />;
+    }
+  };
+  
+  const updateOverallStatus = () => {
+    // If any document is verified, set overall status to VERIFIED
+    if (documents.some(doc => doc.status === "VERIFIED")) {
+      setVerificationStatus("VERIFIED");
+    } 
+    // If any document is rejected, set overall status to REJECTED
+    else if (documents.some(doc => doc.status === "REJECTED")) {
+      setVerificationStatus("REJECTED");
+    }
+    // If all documents are pending, set overall status to PENDING
+    else {
+      setVerificationStatus("PENDING");
+    }
+  };
+  
+  const getVerificationProgress = () => {
+    const uploadedCount = documents.filter(doc => doc.fileName).length;
+    const verifiedCount = documents.filter(doc => doc.status === "VERIFIED").length;
+    
+    // Calculate progress based on upload and verification status
+    const totalSteps = documents.length * 2; // Upload + verification for each document
+    const completedSteps = uploadedCount + verifiedCount;
+    
+    return Math.floor((completedSteps / totalSteps) * 100);
   };
   
   const getVerificationGuide = () => {
@@ -116,61 +216,133 @@ const VerificationTab = () => {
             </div>
             {getStatusBadge(verificationStatus)}
           </div>
+          <div className="mt-4">
+            <Progress value={getVerificationProgress()} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Verification progress: {getVerificationProgress()}%
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
+            {/* Hidden file inputs */}
+            <input
+              type="file"
+              ref={fileInputRefs.AADHAAR}
+              style={{ display: 'none' }}
+              accept="image/*,.pdf"
+              onChange={(e) => handleFileChange(e, "AADHAAR")}
+            />
+            <input
+              type="file"
+              ref={fileInputRefs.PAN}
+              style={{ display: 'none' }}
+              accept="image/*,.pdf"
+              onChange={(e) => handleFileChange(e, "PAN")}
+            />
+            <input
+              type="file"
+              ref={fileInputRefs.DRIVERS_LICENSE}
+              style={{ display: 'none' }}
+              accept="image/*,.pdf"
+              onChange={(e) => handleFileChange(e, "DRIVERS_LICENSE")}
+            />
+            
+            {/* Aadhaar Card */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-start space-x-3">
                 <div className="bg-primary/10 p-2 rounded-full">
-                  <Shield className="h-5 w-5 text-primary" />
+                  <CreditCard className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">ID Proof (Required)</p>
+                  <p className="font-medium">Aadhaar Card (Required)</p>
                   <p className="text-sm text-muted-foreground">
-                    Upload a government-issued ID card, passport, or driver's license
+                    Upload a clear image of your Aadhaar card (front and back)
                   </p>
                 </div>
               </div>
               
-              {documents.find(doc => doc.type === "ID_CARD") ? (
+              {documents.find(doc => doc.type === "AADHAAR")?.fileName ? (
                 <div className="text-right">
-                  <p className="text-sm font-medium">{documents.find(doc => doc.type === "ID_CARD")?.fileName}</p>
+                  <p className="text-sm font-medium">{documents.find(doc => doc.type === "AADHAAR")?.fileName}</p>
                   <div className="mt-1">
-                    {getStatusBadge(documents.find(doc => doc.type === "ID_CARD")?.status || "PENDING")}
+                    {getStatusBadge(documents.find(doc => doc.type === "AADHAAR")?.status || "PENDING")}
                   </div>
                 </div>
               ) : (
-                <Button variant="outline" onClick={() => handleUploadDocument("ID_CARD")}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleUploadClick("AADHAAR")}
+                  disabled={isUploading === "AADHAAR"}
+                >
                   <UploadCloud className="h-4 w-4 mr-2" />
-                  Upload
+                  {isUploading === "AADHAAR" ? "Uploading..." : "Upload"}
                 </Button>
               )}
             </div>
             
+            {/* PAN Card */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-start space-x-3">
                 <div className="bg-primary/10 p-2 rounded-full">
-                  <Shield className="h-5 w-5 text-primary" />
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Address Proof (Required)</p>
+                  <p className="font-medium">PAN Card (Required)</p>
                   <p className="text-sm text-muted-foreground">
-                    Upload a utility bill, bank statement, or rental agreement
+                    Upload a clear image of your PAN card
                   </p>
                 </div>
               </div>
               
-              {documents.find(doc => doc.type === "ADDRESS_PROOF") ? (
+              {documents.find(doc => doc.type === "PAN")?.fileName ? (
                 <div className="text-right">
-                  <p className="text-sm font-medium">{documents.find(doc => doc.type === "ADDRESS_PROOF")?.fileName}</p>
+                  <p className="text-sm font-medium">{documents.find(doc => doc.type === "PAN")?.fileName}</p>
                   <div className="mt-1">
-                    {getStatusBadge(documents.find(doc => doc.type === "ADDRESS_PROOF")?.status || "PENDING")}
+                    {getStatusBadge(documents.find(doc => doc.type === "PAN")?.status || "PENDING")}
                   </div>
                 </div>
               ) : (
-                <Button variant="outline" onClick={() => handleUploadDocument("ADDRESS_PROOF")}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleUploadClick("PAN")}
+                  disabled={isUploading === "PAN"}
+                >
                   <UploadCloud className="h-4 w-4 mr-2" />
-                  Upload
+                  {isUploading === "PAN" ? "Uploading..." : "Upload"}
+                </Button>
+              )}
+            </div>
+            
+            {/* Driving License */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Car className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Driving License (Optional)</p>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a clear image of your driving license (front and back)
+                  </p>
+                </div>
+              </div>
+              
+              {documents.find(doc => doc.type === "DRIVERS_LICENSE")?.fileName ? (
+                <div className="text-right">
+                  <p className="text-sm font-medium">{documents.find(doc => doc.type === "DRIVERS_LICENSE")?.fileName}</p>
+                  <div className="mt-1">
+                    {getStatusBadge(documents.find(doc => doc.type === "DRIVERS_LICENSE")?.status || "PENDING")}
+                  </div>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleUploadClick("DRIVERS_LICENSE")}
+                  disabled={isUploading === "DRIVERS_LICENSE"}
+                >
+                  <UploadCloud className="h-4 w-4 mr-2" />
+                  {isUploading === "DRIVERS_LICENSE" ? "Uploading..." : "Upload"}
                 </Button>
               )}
             </div>

@@ -2,6 +2,8 @@
 import { User, Heart, MessageSquare, History, Calendar, CreditCard, Settings, ShieldCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
 
 interface UserDashboardSidebarProps {
   activeTab: string;
@@ -11,21 +13,54 @@ interface UserDashboardSidebarProps {
 
 const UserDashboardSidebar = ({ activeTab, setActiveTab, unreadMessages }: UserDashboardSidebarProps) => {
   const navigate = useNavigate();
+  const [userName, setUserName] = useState("User");
+  const [userAvatar, setUserAvatar] = useState("");
+
+  useEffect(() => {
+    // Get user name and avatar from localStorage
+    const storedUserName = localStorage.getItem("userName");
+    const storedUserAvatar = localStorage.getItem("userAvatar");
+    
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+    
+    if (storedUserAvatar) {
+      setUserAvatar(storedUserAvatar);
+    }
+    
+    // Listen for storage events to update avatar if changed in another tab
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "userAvatar") {
+        setUserAvatar(e.newValue || "");
+      } else if (e.key === "userName") {
+        setUserName(e.newValue || "User");
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   const handleNavigation = (tab: string) => {
     setActiveTab(tab);
     navigate(`/user-dashboard/${tab}`);
   };
 
+  const initials = userName.split(" ").map(n => n[0]).join("").toUpperCase();
+
   return (
     <div className="lg:w-1/4">
       <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
         <div className="flex items-center gap-4 mb-4 pb-4 border-b">
-          <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <User className="h-6 w-6 text-primary" />
-          </div>
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={userAvatar} alt={userName} />
+            <AvatarFallback className="bg-primary/10">{initials}</AvatarFallback>
+          </Avatar>
           <div>
-            <h3 className="font-semibold">Alex Johnson</h3>
+            <h3 className="font-semibold">{userName}</h3>
             <p className="text-sm text-gray-600">Tenant</p>
           </div>
         </div>

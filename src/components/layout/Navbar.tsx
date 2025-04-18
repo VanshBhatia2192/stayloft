@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Building, Home, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -7,18 +7,33 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/user/UserMenu";
 import { UserRole } from "@/types";
 
-// Mock user state - in a real app, this would come from your auth context
-const mockUser = {
-  type: "TENANT" as UserRole,
-  name: "John Doe",
-  image: "",
-};
-
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userType, setUserType] = useState<UserRole>("TENANT");
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user is logged in
+    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(loggedIn);
+    
+    // Get user type and name from localStorage
+    if (loggedIn) {
+      const storedUserType = localStorage.getItem("userRole") as UserRole;
+      const storedUserName = localStorage.getItem("userName");
+      
+      if (storedUserType) {
+        setUserType(storedUserType);
+      }
+      
+      if (storedUserName) {
+        setUserName(storedUserName);
+      }
+    }
+    
     const handleScroll = () => {
       if (window.scrollY > 10) {
         setIsScrolled(true);
@@ -30,6 +45,14 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogin = () => {
+    navigate("/login");
+  };
+
+  const handleSignup = () => {
+    navigate("/signup");
+  };
 
   return (
     <header 
@@ -63,16 +86,15 @@ const Navbar = () => {
         {/* Auth Buttons or User Menu */}
         <div className="hidden md:flex items-center gap-4">
           <ThemeToggle />
-          {mockUser ? (
+          {isLoggedIn ? (
             <>
               <UserMenu 
-                userType={mockUser.type}
-                userName={mockUser.name}
-                userImage={mockUser.image}
+                userType={userType}
+                userName={userName}
               />
-              {mockUser.type === "OWNER" && (
+              {userType === "OWNER" && (
                 <Button className="flex items-center gap-2" asChild>
-                  <Link to="/dashboard">
+                  <Link to="/dashboard/add-property">
                     <Home className="h-5 w-5" />
                     List Property
                   </Link>
@@ -81,15 +103,11 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Button variant="ghost" className="flex items-center gap-2" asChild>
-                <Link to="/login">
-                  Sign in
-                </Link>
+              <Button variant="ghost" className="flex items-center gap-2" onClick={handleLogin}>
+                Sign in
               </Button>
-              <Button className="flex items-center gap-2" asChild>
-                <Link to="/signup">
-                  Sign up
-                </Link>
+              <Button className="flex items-center gap-2" onClick={handleSignup}>
+                Sign up
               </Button>
             </>
           )}
@@ -137,29 +155,34 @@ const Navbar = () => {
               About
             </Link>
             <hr className="my-2" />
-            {!mockUser ? (
+            {!isLoggedIn ? (
               <>
-                <Link 
-                  to="/login" 
-                  className="flex items-center gap-2 text-foreground hover:text-primary font-medium p-2"
-                  onClick={() => setIsMenuOpen(false)}
+                <Button 
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleLogin();
+                  }}
                 >
                   Sign in
-                </Link>
-                <Link 
-                  to="/signup" 
-                  className="flex items-center gap-2 text-primary font-medium p-2"
-                  onClick={() => setIsMenuOpen(false)}
+                </Button>
+                <Button 
+                  variant="default"
+                  className="justify-start"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleSignup();
+                  }}
                 >
                   Sign up
-                </Link>
+                </Button>
               </>
             ) : (
               <div className="flex items-center justify-between p-2">
                 <UserMenu 
-                  userType={mockUser.type}
-                  userName={mockUser.name}
-                  userImage={mockUser.image}
+                  userType={userType}
+                  userName={userName}
                 />
                 <ThemeToggle />
               </div>

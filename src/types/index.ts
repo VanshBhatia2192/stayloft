@@ -44,6 +44,8 @@ export interface PropertyLocation {
   area?: string;
   address?: string;
   pincode?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type PropertyType = "FLAT" | "PG" | "HOSTEL";
@@ -66,7 +68,9 @@ export type Amenity =
   | "Food" 
   | "Cleaning"
   | "Attached Bathroom"
-  | "Geyser";
+  | "Geyser"
+  | "Furnished"
+  | "Washing Machine";
 
 export type UserRole = "TENANT" | "OWNER" | "ADMIN";
 
@@ -90,6 +94,10 @@ export interface User {
   notifications: NotificationPreference;
   verificationStatus: VerificationStatus;
   verificationDocuments?: VerificationDocument[];
+  address?: string;
+  language?: string;
+  profileCompleted?: boolean;
+  profileCompletionPercentage?: number;
 }
 
 export interface RecentSearch {
@@ -156,9 +164,11 @@ export interface NotificationPreference {
 export interface VerificationDocument {
   id: string;
   userId: string;
-  type: "ID_CARD" | "PASSPORT" | "DRIVERS_LICENSE" | "ADDRESS_PROOF";
+  type: "ID_CARD" | "PASSPORT" | "DRIVERS_LICENSE" | "ADDRESS_PROOF" | "AADHAAR" | "PAN";
   fileUrl: string;
   status: VerificationStatus;
   uploadedAt: Date;
   verifiedAt?: Date;
 }
+
+export type Language = "English" | "Hindi" | "Tamil" | "Telugu" | "Kannada" | "Malayalam" | "Bengali" | "Marathi" | "Gujarati";
